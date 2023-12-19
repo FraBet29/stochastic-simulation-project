@@ -27,6 +27,13 @@ def crude_MC(samples, f):
 
 
 def loglog_graph(nb_samples, MC_estims, ref_value):
+    """
+    Plot the graph of the error in absolute value of the MC_estims for the 'true' value ref_value.
+    args : nb_samples, vector containing the number of samples used to compute each estimator
+           MC_estims, the estimators
+           ref_value, the reference 'true' value
+    return : /
+    """
     # compute absolute values of the error between estimators and ref_value
     absolute_errors = np.abs(MC_estims - ref_value)
 
