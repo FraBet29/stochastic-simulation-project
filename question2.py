@@ -104,16 +104,3 @@ def MCLS_prime (samples, f):
     # compute the estimator
     estim = c0
     return estim
-
-# In[1] :
-"""
-import numpy as np
-import math
-N = 100
-nb_samples = [math.ceil(np.power(2, 1/4)**n) for n in range(N)]
-unif_samps = np.random.uniform(0, 1, nb_samples[2])
-# Define the degree of the Legendre polynomials
-degree = 4
-
-# Generate Legendre polynomial coefficients
-"""
