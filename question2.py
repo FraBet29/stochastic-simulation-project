@@ -65,3 +65,55 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
 
     return
 
+def MCLS (samples, f, n):
+    """
+    Compute Monte Carlo Least Square estimator of the integral of f between 0 and 1.
+    args : samples, samples x drawn from uniform distribution U([0, 1])
+           f, the function to integrate
+           n, maximal exponential of the legendre polynomials
+    return : estim, MCLS estimator based on these samples
+    """
+    # compute the Vandermonde matrix
+    V = np.polynomial.legendre.legvander(samples, n)
+    """
+    # compute the Vandermonde matrix by hand
+    coef = [1] * (n + 1)
+    L = np.polynomial.legendre.Legendre(coef, domain=[0, 1])
+    x = np.repeat(samples, n, axis=0).reshape(-1, n)
+    V = L(x)
+    """
+    # compute the coefficients of the estimator using a QR decomposition
+    Q, R = np.linalg.qr(V.T @ V)
+    y = Q.T @ (V.T @ f(samples))
+    c = np.linalg.solve(R, y)
+    # compute the estimator
+    estim = np.sum(f(samples) - c @ V.T) / len(samples) + c[0]
+    return estim
+
+def MCLS_prime (samples, f):
+    """
+    Compute an alternative Monte Carlo Least Square estimator of the integral of f between 0 and 1.
+    args : samples, samples x drawn from uniform distribution U([0, 1])
+           f, the function to integrate
+    return : estim, MCLS estimator based on these samples
+    """
+    # compute the Vandermonde matrix
+    V = np.polynomial.legendre.legvander(samples, 0)
+    # compute the coefficients of the estimator
+    c0 = np.linalg.inv(V.T @ V) @ V.T @ f(samples)
+    # compute the estimator
+    estim = c0
+    return estim
+
+# In[1] :
+"""
+import numpy as np
+import math
+N = 100
+nb_samples = [math.ceil(np.power(2, 1/4)**n) for n in range(N)]
+unif_samps = np.random.uniform(0, 1, nb_samples[2])
+# Define the degree of the Legendre polynomials
+degree = 4
+
+# Generate Legendre polynomial coefficients
+"""
