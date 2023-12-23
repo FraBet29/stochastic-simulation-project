@@ -104,3 +104,22 @@ def MCLS_prime (samples, f):
     # compute the estimator
     estim = c0
     return estim
+
+
+def least_squares(n, M): # n + 1 coefficients, M samples
+	# generate M samples
+	x = np.random.uniform(0, 1, M)
+	y = f(x)
+	# solve the least squares problem
+	c = np.polynomial.legendre.Legendre.fit(x, y, n, domain=[0, 1]).coef
+	return c
+
+def MCLS_new(samples, f, n):
+    c = least_squares(n, len(samples))
+    estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples, c)) / len(samples) + c[0]
+    return estim
+
+def MCLS_prime_new(samples, f):
+    c = least_squares(0, len(samples))
+    estim = c
+    return estim
