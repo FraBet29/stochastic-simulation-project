@@ -74,7 +74,8 @@ def MCLS (samples, f, n):
     return : estim, MCLS estimator based on these samples
     """
     # compute the Vandermonde matrix
-    V = np.polynomial.legendre.legvander(samples, n)
+    x = np.random.uniform(0, 1, len(samples))
+    V = np.polynomial.legendre.legvander(x, n)
     """
     # compute the Vandermonde matrix by hand
     coef = [1] * (n + 1)
@@ -82,9 +83,12 @@ def MCLS (samples, f, n):
     x = np.repeat(samples, n, axis=0).reshape(-1, n)
     V = L(x)
     """
+    print("n = ", n)
+    # print the condition number of the Vandermonde matrix
+    print("Condition number of the Vandermonde matrix : ", np.linalg.cond(V))
     # compute the coefficients of the estimator using a QR decomposition
     Q, R = np.linalg.qr(V.T @ V)
-    y = Q.T @ (V.T @ f(samples))
+    y = Q.T @ (V.T @ f(x))
     c = np.linalg.solve(R, y)
     # compute the estimator
     estim = np.sum(f(samples) - c @ V.T) / len(samples) + c[0]
@@ -97,10 +101,11 @@ def MCLS_prime (samples, f):
            f, the function to integrate
     return : estim, MCLS estimator based on these samples
     """
+    x = np.random.uniform(0, 1, len(samples))
     # compute the Vandermonde matrix
-    V = np.polynomial.legendre.legvander(samples, 0)
+    V = np.polynomial.legendre.legvander(x, 0)
     # compute the coefficients of the estimator
-    c0 = np.linalg.inv(V.T @ V) @ V.T @ f(samples)
+    c0 = np.linalg.inv(V.T @ V) @ V.T @ f(x)
     # compute the estimator
     estim = c0
     return estim
