@@ -38,8 +38,8 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
     absolute_errors = np.abs(MC_estims - ref_value)
 
     # create log-log plot
-    log_nb_samples = np.log(nb_samples)
-    log_errors = np.log(absolute_errors)
+    log_nb_samples = np.log10(nb_samples)
+    log_errors = np.log10(absolute_errors)
 
     plt.figure(figsize=(8, 6))
     plt.scatter(log_nb_samples, log_errors, label='Absolute error')
@@ -54,7 +54,7 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
     slope = regression.coef_[0]
     intercept = regression.intercept_
     equation = f'y = {slope:.2f}x + {intercept:.2f}'
-    plt.text(0.5, -8, equation, fontsize=10, color='red')
+    plt.text(0.5, -4, equation, fontsize=10, color='red')
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Absolute error)')
@@ -153,10 +153,10 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value):
         absolute_errors = np.abs(MC_estims - ref_value)
 
         # create log-log plot
-        log_nb_samples = np.log(nb_samples)
-        log_errors = np.log(absolute_errors)
+        log_nb_samples = np.log10(nb_samples)
+        log_errors = np.log10(absolute_errors)
 
-        plt.scatter(log_nb_samples, log_errors, label=f'Series {i+1}', color=colors(i))
+        plt.scatter(log_nb_samples, log_errors, label=f'Serie {i+1}', color=colors(i), s=5)
 
         # Fit a linear regression line
         regression = LinearRegression()
@@ -168,7 +168,7 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value):
         slope = regression.coef_[0]
         intercept = regression.intercept_
         equation = f'y = {slope:.2f}x + {intercept:.2f}'
-        plt.text(0.5, -8 - i * 0.5, equation, fontsize=10, color=colors(i))
+        plt.text(max(log_nb_samples)+1, -1 - i * 0.3, equation, fontsize=10, color=colors(i))
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Absolute error)')
