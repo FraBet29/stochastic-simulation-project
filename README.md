@@ -3,9 +3,11 @@ TODO list:
 - on Thursday ask to the TA the questions:
                   the square in eq (11)
                   what do they mean with "generalize the estimator"
-                  point 3.a "solve the problem" how? numerically? for multiple values of a and b?
-                  point 3.b, use the MCLS or the weighted one?
-- 1: Francesca
-- 2.a: Sophie
-- 2.b: Marianna
-- everybody think about a bound for the point 4
+                  point 5.a "solve the problem" how? numerically? for multiple values of a and b?
+                  point 5.b, use the MCLS or the weighted one?
+- 1: Francesca ------------------ OK
+- 2.a: Sophie ------------------- OK
+- 2.b: Marianna --- currently, problems to think about
+- 3: Sophie ----- done but to be checked 
+- 4: 2 methods, to implement
+- 5: 
