@@ -9,8 +9,8 @@ TODO list:
 - 2.a: Sophie ------------------- OK
 - 2.b: Marianna --- currently, problems to think about
 - 3: Sophie ----- done, to be checked
-- 4: 2 methods to implement + estimators \n
-     4a) Sophie -- implemented, low acc rate, to be checked \n
-     4b) \n
-     4c) \n
+- 4: 2 methods to implement + estimators
+   * 4a) Sophie -- implemented, low acc rate, to be checked \n
+   * 4b) \n
+   * 4c) \n
 - 5: 
