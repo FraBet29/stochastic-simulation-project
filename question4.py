@@ -69,7 +69,7 @@ def sample_from_h(M, ite_max, n) :
     return: h_samples, array of the M samples from pdf g
     """
     h_samples = np.zeros(M)
-    cst_C = math.e*4
+    cst_C = 4*math.e
     k = 0
     ite = 0
 
@@ -111,6 +111,28 @@ def visualize_cdf_from_samples(samples):
     plt.title('Empirical CDF')
     plt.xlabel('Samples')
     plt.ylabel('Cumulative Probability')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+def visualize_bound_g_on_h(n_value) :
+    # Define the range of x values
+    x_values = np.linspace(0.01, 0.99, 100)  # Adjust the range as needed
+
+    # Calculate the corresponding y values for pdf_h and bound_pdf_g
+    y_bound_pdf_g = bound_pdf_g(x_values)
+
+    # Plotting
+    plt.figure(figsize=(8, 6))
+
+    for n in range(0, n_value+1) :
+        y_pdf_h = pdf_h(x_values, n)
+        plt.plot(x_values, y_pdf_h, label='pdf_h')
+    plt.plot(x_values, math.e*4*y_bound_pdf_g, label='bound_pdf_g')
+
+    plt.title('Comparison of pdf_h and bound_pdf_g')
+    plt.xlabel('x')
+    plt.ylabel('Density')
     plt.legend()
     plt.grid(True)
     plt.show()
