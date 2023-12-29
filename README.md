@@ -13,4 +13,7 @@ TODO list:
    * 4a) Sophie -- implemented, low acc rate, to be checked
    * 4b) 
    * 4c)
-- 5: 
+- 5:
+   * 5a) done both with Euler scheme and solve_ivp function
+   * 5b)
+   * 5c)
