@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def eval_phi_squared(x, n):
     c_vector = np.zeros(n+1)
     c_vector[n] = 1
-    return np.square(np.polynomial.legendre.legval(2*x-1, c_vector))
+    return np.square(np.polynomial.legendre.legval(2*x-1, c_vector))*(2*n-1)
 
 
 def g(x):

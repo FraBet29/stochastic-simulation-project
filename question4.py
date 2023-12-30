@@ -16,7 +16,7 @@ def pdf_h(x, n) :
     c_vector = np.zeros(n+1)
     for j in range(n+1) :
         c_vector[j] = 1
-        sum_of_squared += np.square(np.polynomial.legendre.legval(2*x-1, c_vector))
+        sum_of_squared += np.square(np.polynomial.legendre.legval(2*x-1, c_vector))*(2*j+1)
         c_vector[j] = 0
 
     return sum_of_squared/(n+1)
@@ -117,7 +117,7 @@ def visualize_cdf_from_samples(samples):
 
 def visualize_bound_g_on_h(n_value) :
     # Define the range of x values
-    x_values = np.linspace(0.01, 0.99, 100)  # Adjust the range as needed
+    x_values = np.linspace(0.0001, 0.9999, 500)  # Adjust the range as needed
 
     # Calculate the corresponding y values for pdf_h and bound_pdf_g
     y_bound_pdf_g = bound_pdf_g(x_values)
@@ -128,7 +128,7 @@ def visualize_bound_g_on_h(n_value) :
     for n in range(0, n_value+1) :
         y_pdf_h = pdf_h(x_values, n)
         plt.plot(x_values, y_pdf_h, label='pdf_h')
-    plt.plot(x_values, math.e*4*y_bound_pdf_g, label='bound_pdf_g')
+    plt.plot(x_values, 4*math.e*y_bound_pdf_g, label='bound_pdf_g')
 
     plt.title('Comparison of pdf_h and bound_pdf_g')
     plt.xlabel('x')
