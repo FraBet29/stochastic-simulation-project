@@ -53,7 +53,49 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
     slope = regression.coef_[0]
     intercept = regression.intercept_
     equation = f'y = {slope:.2f}x + {intercept:.2f}'
-    plt.text(0.5, -4, equation, fontsize=10, color='red')
+    plt.text(1.5, -3, equation, fontsize=10, color='red')
+
+    plt.xlabel('Log(Number of samples M)')
+    plt.ylabel('Log(Absolute error)')
+    plt.title('Log-log plot of absolute error \n as a function of the number of samples M')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    return
+
+def loglog_average_error_graph(nb_samples, MC_estims, ref_value):
+    """
+    Plot the graph of the error in absolute value of the MC_estims for the 'true' value ref_value.
+    args : nb_samples, vector containing the number of samples used to compute each estimator
+           MC_estims, list of lists of the estimators
+           ref_value, the reference 'true' value
+    return : /
+    """
+    # compute absolute values of the error between estimators and ref_value
+    absolute_errors = np.abs(MC_estims - ref_value)
+    
+    averages = 1/len(MC_estims[0])*np.sum(absolute_errors, axis=1)
+
+    # create log-log plot
+    log_nb_samples = np.log10(nb_samples)
+    log_errors = np.log10(averages)
+
+
+    plt.figure(figsize=(8, 6))
+    plt.scatter(log_nb_samples, log_errors, label='Absolute error')
+
+    # Fit a linear regression line
+    regression = LinearRegression()
+    regression.fit(log_nb_samples.reshape(-1, 1), log_errors)
+    pred = regression.predict(log_nb_samples.reshape(-1, 1))
+    plt.plot(log_nb_samples, pred, color='red', label='Linear regression')
+
+    # Get the coefficients of the linear regression
+    slope = regression.coef_[0]
+    intercept = regression.intercept_
+    equation = f'y = {slope:.2f}x + {intercept:.2f}'
+    plt.text(3, -1.5, equation, fontsize=10, color='red')
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Absolute error)')
