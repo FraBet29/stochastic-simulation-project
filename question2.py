@@ -204,7 +204,7 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
     """    
     
     plt.figure(figsize=(8, 6))
-    colors = plt.cm.get_cmap('tab10', len(MC_estims_list))  # Get distinct colors
+    colors = plt.cm.get_cmap('Set2', len(MC_estims_list))  # Get distinct colors
 
     for i, MC_estims in enumerate(MC_estims_list):
         # discard values equal to -1 (not valid)
@@ -215,34 +215,41 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
         absolute_errors = np.abs(MC_estims - ref_value)
 
         # discard values for which the error is of the order of epsilon machine (cannot compute log)
-        eps_idx = np.where(absolute_errors > 1e-16)[0]
-        absolute_errors = absolute_errors[eps_idx]
+        eps_idx = np.where(absolute_errors < 1e-16)[0]
+        absolute_errors[eps_idx] = 1e-16
 
         # create log-log plot
-        log_nb_samples = np.log10(nb_samples[valid_idx][eps_idx])
+        log_nb_samples = np.log10(nb_samples[valid_idx])
         log_errors = np.log10(absolute_errors)
 
         legend_M = legend_series[i]
-        if legend_M == -2:
-            legend_M = 'M/2'
-        elif legend_M == -1:
-            legend_M = 'srqt(M)'
-        plt.scatter(log_nb_samples, log_errors, label=f'Serie M = '+ str(legend_M), color=colors(i), s=5)       
+        if legend_M == -2 or legend_M == -1:
+            if legend_M == -2:
+                legend_M = 'M/2'
+                color = 'blue'  # Blue color for legend_series -2
+            else:
+                legend_M = 'sqrt(M)'
+                color = 'red'  # Red color for legend_series -1
 
-        if (legend_series[i] != -1) and (legend_series[i] != -2):
-            # fit a linear regression line
+            plt.plot(log_nb_samples, log_errors, label=f'Serie n = ' + str(legend_M), color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
+        else:
+            # Colors for other legend_series values
+            color = colors(i)
+
+            plt.scatter(log_nb_samples, log_errors, label=f'Serie n = ' + str(legend_M), color=color, s=5)
+
+            # Fit a linear regression line
             regression = LinearRegression()
-            regression.fit(log_nb_samples[log_nb_samples>2].reshape(-1, 1), log_errors[log_nb_samples>2])
-            pred = regression.predict(log_nb_samples.reshape(-1, 1))
-            plt.plot(log_nb_samples, pred, color=colors(i))
+            regression.fit(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1), log_errors[log_nb_samples > 2.5])
+            pred = regression.predict(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1))
+            plt.plot(log_nb_samples[log_nb_samples > 2.5], pred, color=color)
 
-            # get the coefficients of the linear regression
             slope = regression.coef_[0]
             intercept = regression.intercept_
             equation = f'y = {slope:.2f}x + {intercept:.2f}'
-            plt.text(max(log_nb_samples)+0.5, -1 - i * 0.5, equation, fontsize=10, color=colors(i))
+            plt.text(max(log_nb_samples) + 0.5, -1 - i * 0.5, equation, fontsize=10, color=color)
 
-    plt.plot(np.log10(nb_samples), np.log10(1 / np.sqrt(nb_samples)), '--', label='$1 / \sqrt{M}$')
+    plt.plot(np.log10(nb_samples), np.log10(1 / np.sqrt(nb_samples)), '--', label='$1 / \sqrt{M}$', color='grey')
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Absolute error)')
@@ -253,7 +260,7 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
 
     return
 
-def multiple_cond_loglog_graph(nb_samples, cond_list):
+def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
     """
     Plot the graph of the condition number of the Vandermonde matrix.
     args : nb_samples, number of samples used to compute the least squares fit
@@ -262,9 +269,18 @@ def multiple_cond_loglog_graph(nb_samples, cond_list):
     """    
 
     plt.figure(figsize=(8, 6))
-    colors = plt.cm.get_cmap('tab10', len(cond_list))  # Get distinct colors
+    colors = plt.cm.get_cmap('Set2', len(cond_list))  # Get distinct colors
 
     for i, cond in enumerate(cond_list):
+        color=colors(i)
+        legend_M = legend_series[i]
+        if legend_series[i] == -1:
+            color = 'red'
+            legend_M = 'sqrt(M)'
+        elif legend_series[i] == -2:
+            color = 'blue'
+            legend_M = 'M/2'
+
         # discard values equal to -1 (not valid)
         valid_idx = np.where(cond != -1)[0]
         cond_filtered = cond[valid_idx]
@@ -274,7 +290,7 @@ def multiple_cond_loglog_graph(nb_samples, cond_list):
         log_nb_samples = np.log10(nb_samples_filtered)
         log_cond = np.log10(cond_filtered - 1)
     
-        plt.plot(log_nb_samples, log_cond, '--*', label=f'Series {i+1}', color=colors(i))
+        plt.plot(log_nb_samples, log_cond, '--*', label=f'Serie n = ' + str(legend_M), color=color)
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Condition number - 1)')
