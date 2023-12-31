@@ -182,7 +182,7 @@ def MCLS_new(samples, f, n):
     estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
     return estim, cond
 
-def MCLS_prime_new(samples, f):
+def MCLS_prime_new(samples, f, n):
     """
     Compute an alternative Monte Carlo Least Square estimator of the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
@@ -190,11 +190,11 @@ def MCLS_prime_new(samples, f):
     return : estim, MCLS estimator based on these samples
              cond, condition number of the Vandermonde matrix
     """
-    c, cond = least_squares(0, len(samples))
-    estim = c
+    c, cond = least_squares(n, len(samples))
+    estim = c[0]
     return estim, cond
 
-def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value):
+def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
     """
     Plot the graph of the error in absolute value of the MC_estims for the 'true' value ref_value.
     args : nb_samples, number of samples used to compute each estimator
@@ -222,19 +222,25 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value):
         log_nb_samples = np.log10(nb_samples[valid_idx][eps_idx])
         log_errors = np.log10(absolute_errors)
 
-        plt.scatter(log_nb_samples, log_errors, label=f'Series {i+1}', color=colors(i), s=5)       
+        legend_M = legend_series[i]
+        if legend_M == -2:
+            legend_M = 'M/2'
+        elif legend_M == -1:
+            legend_M = 'srqt(M)'
+        plt.scatter(log_nb_samples, log_errors, label=f'Serie M = '+ str(legend_M), color=colors(i), s=5)       
 
-        # fit a linear regression line
-        regression = LinearRegression()
-        regression.fit(log_nb_samples.reshape(-1, 1), log_errors)
-        pred = regression.predict(log_nb_samples.reshape(-1, 1))
-        plt.plot(log_nb_samples, pred, color=colors(i))
+        if (legend_series[i] != -1) and (legend_series[i] != -2):
+            # fit a linear regression line
+            regression = LinearRegression()
+            regression.fit(log_nb_samples[log_nb_samples>2].reshape(-1, 1), log_errors[log_nb_samples>2])
+            pred = regression.predict(log_nb_samples.reshape(-1, 1))
+            plt.plot(log_nb_samples, pred, color=colors(i))
 
-        # get the coefficients of the linear regression
-        slope = regression.coef_[0]
-        intercept = regression.intercept_
-        equation = f'y = {slope:.2f}x + {intercept:.2f}'
-        plt.text(max(log_nb_samples)+1, -1 - i * 0.3, equation, fontsize=10, color=colors(i))
+            # get the coefficients of the linear regression
+            slope = regression.coef_[0]
+            intercept = regression.intercept_
+            equation = f'y = {slope:.2f}x + {intercept:.2f}'
+            plt.text(max(log_nb_samples)+0.5, -1 - i * 0.5, equation, fontsize=10, color=colors(i))
 
     plt.plot(np.log10(nb_samples), np.log10(1 / np.sqrt(nb_samples)), '--', label='$1 / \sqrt{M}$')
 
