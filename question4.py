@@ -1,6 +1,7 @@
 import numpy as np 
 import math
 import matplotlib.pyplot as plt
+from question2 import f
 
 ########################################
 # Question 4 : MCLS estimators with IS #
@@ -16,6 +17,7 @@ def pdf_h(x, n) :
     c_vector = np.zeros(n+1)
     for j in range(n+1) :
         c_vector[j] = 1
+        # 2j+1 is a normalizing factor on Legendre polynomials
         sum_of_squared += np.square(np.polynomial.legendre.legval(2*x-1, c_vector))*(2*j+1)
         c_vector[j] = 0
 
@@ -138,6 +140,39 @@ def visualize_bound_g_on_h(n_value) :
     plt.show()
 
 
-def IS_MCLS(samples, f) :
+def IS_MCLS(samples1, samples2, f, n) :
+    """
+    Compute Importance-Sampling Monte Carlo Least Square estimator of the integral of f between 0 and 1.
+    args : samples, samples x drawn from h=1/w distribution
+           f, the function to integrate
+           n, maximal exponential of the legendre polynomials
+    return : estim, IS-MCLS estimator based on these samples
+             cond, condition number of the Vandermonde matrix
+    """
+    # w samples for LS fitting
+    w_evaluations1 = 1/pdf_h(samples1, n)
+    W_vect = np.sqrt(w_evaluations1)
+    c, cond = weighted_least_squares(n, samples1, W_vect)
 
-    return
+    # w samples for computing estimators
+    w_evaluations2 = 1/pdf_h(samples2, n)
+    samples2bis = samples2*2 - 1
+    estim = np.dot(f(samples2) - np.polynomial.legendre.legval(samples2bis, c), w_evaluations2) / np.sum(w_evaluations2) + c[0]
+    return estim, cond
+
+
+def weighted_least_squares(n, x, w_vect):
+    """
+    Compute n + 1 coefficients of least squares based on M samples
+    args : n, st n+1 is the number of coefficients
+           x, the samples to use, drawn from distribution h
+           w_mtx, the weight matrix
+    return : c, vector containing the n+1 optimal coefficients
+             cond, condition number of the Vandermonde matrix
+    """
+	# evaluate function f at these samples
+    y = f(x)
+	# solve the least squares problem
+    c, diagnostics = np.polynomial.legendre.Legendre.fit(x, y, n, domain=[0, 1], full=True, w=w_vect) # diagnostics = [resid, rank, sv, rcond]
+    cond = np.max(diagnostics[2]) / np.min(diagnostics[2])
+    return c.coef, cond

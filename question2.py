@@ -55,6 +55,8 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
     equation = f'y = {slope:.2f}x + {intercept:.2f}'
     plt.text(1.5, -3, equation, fontsize=10, color='red')
 
+    plt.plot(np.log10(nb_samples), np.log10(1 / np.sqrt(nb_samples)), '--', label='$1 / \sqrt{M}$', color='grey')
+
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Absolute error)')
     plt.title('Log-log plot of absolute error \n as a function of the number of samples M')
@@ -95,7 +97,9 @@ def loglog_average_error_graph(nb_samples, MC_estims, ref_value):
     slope = regression.coef_[0]
     intercept = regression.intercept_
     equation = f'y = {slope:.2f}x + {intercept:.2f}'
-    plt.text(3, -1.5, equation, fontsize=10, color='red')
+    plt.text(2.8, -1.2, equation, fontsize=10, color='red')
+
+    plt.plot(np.log10(nb_samples), np.log10(1 / np.sqrt(nb_samples)), '--', label='$1 / \sqrt{M}$', color='grey')
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Absolute error)')
@@ -228,7 +232,7 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
                 legend_M = 'M/2'
                 color = 'blue'  # Blue color for legend_series -2
             else:
-                legend_M = 'sqrt(M)'
+                legend_M = '$\sqrt{M}$'
                 color = 'red'  # Red color for legend_series -1
 
             plt.plot(log_nb_samples, log_errors, label=f'Serie n = ' + str(legend_M), color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
@@ -276,7 +280,7 @@ def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
         legend_M = legend_series[i]
         if legend_series[i] == -1:
             color = 'red'
-            legend_M = 'sqrt(M)'
+            legend_M = '$\sqrt{M}$'
         elif legend_series[i] == -2:
             color = 'blue'
             legend_M = 'M/2'
