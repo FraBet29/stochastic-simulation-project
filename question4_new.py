@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def eval_phi_squared(x, n):
     c_vector = np.zeros(n+1)
     c_vector[n] = 1
-    return np.square(np.polynomial.legendre.legval(2*x-1, c_vector))*(2*n-1)
+    return np.square(np.polynomial.legendre.legval(2*x-1, c_vector))*(2*n+1)
 
 
 def g(x):
@@ -44,7 +44,6 @@ def sample_from_h_new(M, ite_max, n):
     """
     h_samples = np.zeros(M)
     C = 4 * math.e
-    # C = 1.1
     
     tot_ite = 0
     
@@ -54,14 +53,11 @@ def sample_from_h_new(M, ite_max, n):
         j = np.random.randint(0, n + 1)
         
 		# Apply the AR method to sample from phi_j^2
-        # C = 1 / (j + 1/4)
         ite = 0
         while ite < ite_max:
             Y_sample = sample_from_g_new(1)
-            # Y_sample = np.random.uniform(0, 1, 1)
             U_sample = np.random.uniform(0, 1, 1)
             if U_sample <= eval_phi_squared(Y_sample, j) / (C * g(Y_sample)):
-            # if U_sample <= eval_phi_squared(Y_sample, j) / C:
                 h_samples[m] = Y_sample
                 break
             ite += 1
