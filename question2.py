@@ -250,7 +250,10 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
 
             slope = regression.coef_[0]
             intercept = regression.intercept_
-            equation = f'y = {slope:.2f}x + {intercept:.2f}'
+            if intercept>=0:
+                equation = f'y = {slope:.2f}x + {intercept:.2f}'
+            else:
+                equation = f'y = {slope:.2f}x - {np.abs(intercept):.2f}'
             plt.text(max(log_nb_samples) + 0.5, -1 - i * 0.5, equation, fontsize=10, color=color)
 
     plt.plot(np.log10(nb_samples), np.log10(1 / np.sqrt(nb_samples)), '--', label='$1 / \sqrt{M}$', color='grey')
