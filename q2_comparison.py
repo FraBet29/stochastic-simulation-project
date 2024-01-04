@@ -59,3 +59,21 @@ def MCLS_fit_V(samples, samples_fit, f, n):
     # compute the estimator
     estim = np.sum(f(samples) - c @ V.T) / len(samples) + c[0]
     return estim
+
+def MCLS_nonorm(samples, samples_fit, f, n):
+    # compute the Vandermonde matrix
+    samples_fit2 = samples_fit * 2 - 1
+    V = np.polynomial.legendre.legvander(samples_fit2, n)
+    c = np.linalg.lstsq(V, f(samples_fit), rcond=None)[0]
+    # compute the estimator
+    samples2 = samples * 2 - 1
+    estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
+    return estim
+
+def MCLS_new_nonorm(samples, samples_fit, f, n):
+    # solve the least squares problem
+    c = np.polynomial.legendre.Legendre.fit(samples_fit, f(samples_fit), n, domain=[0, 1])
+    c = c.coef
+    samples2 = samples*2 - 1
+    estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
+    return estim
