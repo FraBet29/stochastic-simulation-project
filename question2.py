@@ -115,46 +115,45 @@ def MCLS(samples, f, n):
     Compute Monte Carlo Least Square estimator of the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
            f, the function to integrate
-           n, maximal exponential of the legendre polynomials
+           n, maximal exponential of the Legendre polynomials
     return : estim, MCLS estimator based on these samples
+             cond, condition number of the Vandermonde matrix
     """
     # compute the Vandermonde matrix
     x = np.random.uniform(0, 1, len(samples))
     x2 = x*2 - 1
     V = np.polynomial.legendre.legvander(x2, n)
+    cond = np.linalg.cond(V)
     """
-    # compute the Vandermonde matrix by hand
-    coef = [1] * (n + 1)
-    L = np.polynomial.legendre.Legendre(coef, domain=[0, 1])
-    x = np.repeat(samples, n, axis=0).reshape(-1, n)
-    V = L(x)
-    """
-    # print("n = ", n)
-    # print the condition number of the Vandermonde matrix
-    # print("Condition number of the Vandermonde matrix : ", np.linalg.cond(V))
     # compute the coefficients of the estimator using a QR decomposition
     Q, R = np.linalg.qr(V.T @ V)
     y = Q.T @ (V.T @ f(x))
     c = np.linalg.solve(R, y)
+    """
+    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
     # compute the estimator
-    estim = np.sum(f(samples) - c @ V.T) / len(samples) + c[0]
-    return estim
+    samples2 = samples*2 - 1
+    estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
+    return estim, cond
 
-def MCLS_prime(samples, f):
+def MCLS_prime(samples, f, n):
     """
     Compute an alternative Monte Carlo Least Square estimator of the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
            f, the function to integrate
+           n, maximal exponential of the Legendre polynomials
     return : estim, MCLS estimator based on these samples
+             cond, condition number of the Vandermonde matrix
     """
-    x = np.random.uniform(0, 1, len(samples))
     # compute the Vandermonde matrix
-    V = np.polynomial.legendre.legvander(x, 0)
+    samples2 = samples*2 - 1
+    V = np.polynomial.legendre.legvander(samples2, n)
+    cond = np.linalg.cond(V)
     # compute the coefficients of the estimator
-    c0 = np.linalg.inv(V.T @ V) @ V.T @ f(x)
+    c = np.linalg.lstsq(V, f(samples), rcond=None)[0]
     # compute the estimator
-    estim = c0
-    return estim
+    estim = c[0]
+    return estim, cond
 
 def least_squares(n, M): 
     """
@@ -297,7 +296,7 @@ def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
         log_nb_samples = np.log10(nb_samples_filtered)
         log_cond = np.log10(cond_filtered - 1)
     
-        plt.plot(log_nb_samples, log_cond, '--*', label=f'Serie n = ' + str(legend_M), color=color)
+        plt.plot(log_nb_samples, log_cond, label=f'Serie n = ' + str(legend_M), color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Condition number - 1)')
