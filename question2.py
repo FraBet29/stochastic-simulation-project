@@ -1,5 +1,6 @@
 import numpy as np 
 import math
+from scipy.stats import norm
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
@@ -15,15 +16,19 @@ def f(x):
     """
     return 1/(25*x**2+1)
 
-def crude_MC(samples, f):
+def crude_MC(samples, f, alpha):
     """
     Provide a crude Monte Carlo estimator for the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
            f, the function to integrate
+            alpha, significance level
     return : estim, crude MC estimator based on these samples
+            CI, confidence interval for the crude MC estimator based on these samples
     """
     estim = np.sum(f(samples)) / len(samples)
-    return estim
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * np.sqrt(np.var(f(samples)) / len(samples)) * quantile
+    return estim, CI
 
 def loglog_graph(nb_samples, MC_estims, ref_value):
     """
@@ -60,6 +65,27 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Absolute error)')
     plt.title('Log-log plot of absolute error \n as a function of the number of samples M')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    return
+
+def plot_CI(nb_samples, MC_estims, CI):
+    """
+    Plot the confidence interval of the crude MC estimator.
+    args : nb_samples, vector containing the number of samples used to compute each estimator
+           MC_estims, the estimators
+           CI, confidence interval for the crude MC estimator based on these samples
+    return : /
+    """
+    plt.figure(figsize=(8, 6))
+    plt.plot(nb_samples, MC_estims, label='Estimator')
+    plt.plot(nb_samples, CI[:, 0], label='Lower bound')
+    plt.plot(nb_samples, CI[:, 1], label='Upper bound')
+    plt.xlabel('Number of samples M')
+    plt.ylabel('Value')
+    plt.title('Confidence interval for the crude MC estimator')
     plt.legend()
     plt.grid(True)
     plt.show()
