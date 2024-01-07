@@ -154,3 +154,52 @@ def IS_MCLS_interior (b_samples, n, epsilon, I, v0, w0, t0, T, Nt, a):
     estim = np.sum(np.dot(Q - np.polynomial.legendre.legval(samples2, c), weights)) / np.sum(weights) + c[0]
 
     return estim
+
+def shifted(x, a, b):
+    """
+    Shift the evaluation of the Legendre polynomials from [-1, 1] to [a, b].
+    """
+    return 2 * (x - a) / (b - a) - 1
+
+def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt):
+    M = len(a_samples)
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    estim = (0.2 ** 2) * np.sum(Q) / M
+    return estim
+
+def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+    M = len(a_samples)
+    # compute the 2D Vandermonde matrix
+    x = np.random.uniform(0.6, 0.8, M)
+    y = np.random.uniform(0.7, 0.9, M)
+    V = np.polynomial.legendre.legvander2d(shifted(x, 0.6, 0.8), shifted(y, 0.7, 0.9), (n, n))
+    cond = np.linalg.cond(V)
+    # compute Q for the least squares problem
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, x[i], y[i])
+    # solve the least squares problem
+    c = np.linalg.lstsq(V, Q, rcond=None)[0]
+    # compute Q for the estimator
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    # compute the estimator
+    estim = (0.2 ** 2) * (np.sum(Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) / M + c[0])
+    return estim, cond
+
+def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+    M = len(a_samples)
+    # compute the 2D Vandermonde matrix
+    V = np.polynomial.legendre.legvander2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), (n, n))
+    cond = np.linalg.cond(V)
+    # compute Q
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    # solve the least squares problem
+    c = np.linalg.lstsq(V, Q, rcond=None)[0]
+    # compute the estimator
+    estim = (0.2 ** 2) * c[0]
+    return estim, cond
