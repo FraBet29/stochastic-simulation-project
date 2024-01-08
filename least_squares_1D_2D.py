@@ -16,11 +16,11 @@ def ls_test_2D():
     x_samples = np.random.uniform(0, 1, M)
     y_samples = np.random.uniform(0, 1, M)
     
-    x = np.random.uniform(0, 1, M)
-    y = np.random.uniform(0, 1, M)
-    V = np.polynomial.legendre.legvander2d(shifted(x, 0, 1), shifted(y, 0, 1), (n, n))
+    #x = np.random.uniform(0, 1, M)
+    #y = np.random.uniform(0, 1, M)
+    V = np.polynomial.legendre.legvander2d(shifted(x_samples, 0, 1), shifted(y_samples, 0, 1), (n, n))
     
-    c = np.linalg.lstsq(V, ff(x, y), rcond=None)[0]
+    c = np.linalg.lstsq(V, ff(x_samples, y_samples), rcond=None)[0]
     
     ff_values = ff(x_samples, y_samples)
     ls_estimate = np.polynomial.legendre.legval2d(shifted(x_samples, 0, 1), shifted(y_samples, 0, 1), c)
