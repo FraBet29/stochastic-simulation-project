@@ -170,6 +170,7 @@ def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt):
     return estim
 
 def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+    """
     M = len(a_samples)
     # compute the 2D Vandermonde matrix
     x = np.random.uniform(0.6, 0.8, M)
@@ -188,8 +189,42 @@ def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     # compute the estimator
     estim = (0.2 ** 2) * (np.sum(Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) / M + c[0])
     return estim, cond
+    """
+    M = len(a_samples)
+    # build a 2D grid of random points for the least squares
+    x = np.random.uniform(0.6, 0.8, M)
+    y = np.random.uniform(0.7, 0.9, M)
+    X, Y = np.meshgrid(x, y)
+    X_shifted, Y_shifted = np.meshgrid(shifted(x, 0.6, 0.8), shifted(y, 0.7, 0.9))
+    # compute Q for the least squares problem
+    Q = np.zeros((M, M))
+    for i in range(M):
+        for j in range(M):
+            Q[i, j] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, X[i, j], Y[i, j])
+    # flatten the 2D grid
+    X_flat, Y_flat, X_shifted_flat, Y_shifted_flat = X.flatten(), Y.flatten(), X_shifted.flatten(), Y_shifted.flatten()
+    Q_flat = Q.flatten()
+    # compute the 2D Vandermonde matrix
+    V = np.polynomial.legendre.legvander2d(X_shifted_flat, Y_shifted_flat, [n, n])
+    cond = np.linalg.cond(V)
+    # solve the least squares problem
+    c = np.linalg.lstsq(V, Q_flat, rcond=None)[0]
+    c = c.reshape((n + 1, n + 1))
+    # build a 2D grid of random points for the estimator
+    A, B = np.meshgrid(a_samples, b_samples)
+    A_shifted, B_shifted = np.meshgrid(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9))
+    # compute Q for the estimator
+    Q = np.zeros((M, M))
+    for i in range(M):
+        for j in range(M):
+            Q[i, j] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, A[i, j], B[i, j])
+    # compute the estimator
+    legval = np.polynomial.legendre.legval2d(A_shifted, B_shifted, c)
+    estim = (0.2 ** 2) * (np.sum(Q.flatten() - legval.flatten()) / M ** 2 + c[0, 0])
+    return estim, cond
 
 def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+    """
     M = len(a_samples)
     # compute the 2D Vandermonde matrix
     V = np.polynomial.legendre.legvander2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), (n, n))
@@ -202,4 +237,26 @@ def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     c = np.linalg.lstsq(V, Q, rcond=None)[0]
     # compute the estimator
     estim = (0.2 ** 2) * c[0]
+    return estim, cond
+    """
+    M = len(a_samples)
+    # build a 2D grid of random points for the least squares
+    A, B = np.meshgrid(a_samples, b_samples)
+    A_shifted, B_shifted = np.meshgrid(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9))
+    # compute Q for the least squares problem
+    Q = np.zeros((M, M))
+    for i in range(M):
+        for j in range(M):
+            Q[i, j] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, A[i, j], B[i, j])
+    # flatten the 2D grid
+    A_flat, B_flat, A_shifted_flat, B_shifted_flat = A.flatten(), B.flatten(), A_shifted.flatten(), B_shifted.flatten()
+    Q_flat = Q.flatten()
+    # compute the 2D Vandermonde matrix
+    V = np.polynomial.legendre.legvander2d(A_shifted_flat, B_shifted_flat, [n, n])
+    cond = np.linalg.cond(V)
+    # solve the least squares problem
+    c = np.linalg.lstsq(V, Q_flat, rcond=None)[0]
+    c = c.reshape((n + 1, n + 1))
+    # compute the estimator
+    estim = (0.2 ** 2) * c[0, 0]
     return estim, cond
