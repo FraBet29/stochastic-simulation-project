@@ -84,8 +84,8 @@ def calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a, b):
 
 def MCLS_multiple(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     # I have some doubts about the range of a and b (this sampling is only for solving the LS problem)
-    #a = np.random.uniform(0.6, 0.8, len(a_samples))
-    a = np.random.uniform(0, 1, len(a_samples))
+    a = np.random.uniform(0.6, 0.8, len(a_samples))
+    #a = np.random.uniform(0, 1, len(a_samples))
     x = a
     y=np.zeros(len(a))
     for i in range(len(a)):
@@ -98,12 +98,12 @@ def MCLS_multiple(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     for i in range(len(a_samples)):
         interior_integral[i] = MCLS_interior(b_samples, n, epsilon, I, v0, w0, t0, T, Nt, a_samples[i])
     # in this case, the function we want to approximate is the interior integral
-    estim = np.sum(interior_integral - np.polynomial.legendre.legval(samples2, c)) / len(a_samples) + c[0]
+    estim = 0.2*(np.sum(interior_integral - np.polynomial.legendre.legval(samples2, c)) / len(a_samples) + c[0])
     return estim
 
 def MCLS_interior (b_samples, n, epsilon, I, v0, w0, t0, T, Nt, a):
-    #b = np.random.uniform(0.7, 0.9, len(b_samples))
-    b = np.random.uniform(0, 1, len(b_samples))
+    b = np.random.uniform(0.7, 0.9, len(b_samples))
+    #b = np.random.uniform(0, 1, len(b_samples))
     x = b
     y=np.zeros(len(b))
     for i in range(len(b)):
@@ -115,7 +115,7 @@ def MCLS_interior (b_samples, n, epsilon, I, v0, w0, t0, T, Nt, a):
     Q = np.zeros(len(b_samples))
     for i in range(len(b_samples)):
         Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a, b_samples[i])
-    estim = np.sum(Q - np.polynomial.legendre.legval(samples2, c)) / len(b_samples) + c[0]
+    estim = 0.2*(np.sum(Q - np.polynomial.legendre.legval(samples2, c)) / len(b_samples) + c[0])
     return estim
 
 
@@ -170,7 +170,7 @@ def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt):
     return estim
 
 def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
-    """
+
     M = len(a_samples)
     # compute the 2D Vandermonde matrix
     x = np.random.uniform(0.6, 0.8, M)
@@ -183,11 +183,12 @@ def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
         Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, x[i], y[i])
     # solve the least squares problem
     c = np.linalg.lstsq(V, Q, rcond=None)[0]
+    c = c.reshape((n + 1, n + 1))
     # compute Q for the estimator
     for i in range(M):
         Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
     # compute the estimator
-    estim = (0.2 ** 2) * (np.sum(Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) / M + c[0])
+    estim = (0.2 ** 2) * (np.sum(Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) / M + c[0][0])
     return estim, cond
     """
     M = len(a_samples)
@@ -222,9 +223,9 @@ def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     legval = np.polynomial.legendre.legval2d(A_shifted, B_shifted, c)
     estim = (0.2 ** 2) * (np.sum(Q.flatten() - legval.flatten()) / M ** 2 + c[0, 0])
     return estim, cond
-
-def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     """
+def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+
     M = len(a_samples)
     # compute the 2D Vandermonde matrix
     V = np.polynomial.legendre.legvander2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), (n, n))
@@ -235,8 +236,9 @@ def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
         Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
     # solve the least squares problem
     c = np.linalg.lstsq(V, Q, rcond=None)[0]
+    c = c.reshape((n + 1, n + 1))
     # compute the estimator
-    estim = (0.2 ** 2) * c[0]
+    estim = (0.2 ** 2) * c[0][0]
     return estim, cond
     """
     M = len(a_samples)
@@ -260,3 +262,4 @@ def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     # compute the estimator
     estim = (0.2 ** 2) * c[0, 0]
     return estim, cond
+    """
