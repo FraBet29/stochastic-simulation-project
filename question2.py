@@ -256,34 +256,38 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
         log_errors = np.log10(absolute_errors)
 
         legend_M = legend_series[i]
-        if legend_M == -2 or legend_M == -1:
+        if legend_M == -2 or legend_M == -1 or legend_M == -3:
             if legend_M == -2:
-                legend_M = 'M/2'
+                legend_M = 'n = M/2'
                 color = 'blue'  # Blue color for legend_series -2
-            else:
-                legend_M = '$\sqrt{M}$'
+            elif legend_M == -1:
+                legend_M = 'n = $\sqrt{M}$'
                 color = 'red'  # Red color for legend_series -1
+            elif legend_M == -3:
+                legend_M = '$ M = n \log{n}$'
+                color = 'green'
 
-            plt.plot(log_nb_samples, log_errors, label=f'Serie n = ' + str(legend_M), color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
+            plt.plot(log_nb_samples, log_errors, label=f'Serie ' + str(legend_M), color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
         else:
             # Colors for other legend_series values
             color = colors(i)
 
             plt.scatter(log_nb_samples, log_errors, label=f'Serie n = ' + str(legend_M), color=color, s=5)
 
-            # Fit a linear regression line
-            regression = LinearRegression()
-            regression.fit(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1), log_errors[log_nb_samples > 2.5])
-            pred = regression.predict(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1))
-            plt.plot(log_nb_samples[log_nb_samples > 2.5], pred, color=color)
+            if len(log_nb_samples[log_nb_samples > 2.5]) != 0:
+                # Fit a linear regression line
+                regression = LinearRegression()
+                regression.fit(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1), log_errors[log_nb_samples > 2.5])
+                pred = regression.predict(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1))
+                plt.plot(log_nb_samples[log_nb_samples > 2.5], pred, color=color)
 
-            slope = regression.coef_[0]
-            intercept = regression.intercept_
-            if intercept>=0:
-                equation = f'y = {slope:.2f}x + {intercept:.2f}'
-            else:
-                equation = f'y = {slope:.2f}x - {np.abs(intercept):.2f}'
-            plt.text(max(log_nb_samples) + 0.5, -1 - i * 0.5, equation, fontsize=10, color=color)
+                slope = regression.coef_[0]
+                intercept = regression.intercept_
+                if intercept>=0:
+                    equation = f'y = {slope:.2f}x + {intercept:.2f}'
+                else:
+                    equation = f'y = {slope:.2f}x - {np.abs(intercept):.2f}'
+                plt.text(max(log_nb_samples) + 0.5, -1 - i * 0.5, equation, fontsize=10, color=color)
 
     plt.plot(np.log10(nb_samples), np.log10(1 / np.sqrt(nb_samples)), '--', label='$1 / \sqrt{M}$', color='grey')
 
@@ -309,13 +313,17 @@ def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
 
     for i, cond in enumerate(cond_list):
         color=colors(i)
-        legend_M = legend_series[i]
+        legend_M = "n =" + str(legend_series[i])
         if legend_series[i] == -1:
             color = 'red'
-            legend_M = '$\sqrt{M}$'
+            legend_M = '$n = \sqrt{M}$'
         elif legend_series[i] == -2:
             color = 'blue'
-            legend_M = 'M/2'
+            legend_M = 'n = M/2'
+        elif legend_series[i] == -3:
+            legend_M = '$ M = n \log{n}$'
+            color = 'green'
+
 
         # discard values equal to -1 (not valid)
         valid_idx = np.where(cond != -1)[0]
@@ -326,7 +334,7 @@ def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
         log_nb_samples = np.log10(nb_samples_filtered)
         log_cond = np.log10(cond_filtered - 1)
     
-        plt.plot(log_nb_samples, log_cond, label=f'Serie n = ' + str(legend_M), color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
+        plt.plot(log_nb_samples, log_cond, label=f'Serie '+ legend_M, color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
 
     plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Log(Condition number - 1)')
