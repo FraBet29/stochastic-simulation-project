@@ -71,19 +71,23 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
 
     return
 
-def plot_CI(nb_samples, MC_estims, CI):
+def plot_CI(nb_samples, MC_estims, CI, exact_val, alpha):
     """
     Plot the confidence interval of the crude MC estimator.
     args : nb_samples, vector containing the number of samples used to compute each estimator
            MC_estims, the estimators
            CI, confidence interval for the crude MC estimator based on these samples
+           exact_val, true value
     return : /
     """
     plt.figure(figsize=(8, 6))
-    plt.plot(nb_samples, MC_estims, label='Estimator')
-    plt.plot(nb_samples, CI[:, 0], label='Lower bound')
-    plt.plot(nb_samples, CI[:, 1], label='Upper bound')
-    plt.xlabel('Number of samples M')
+    plt.plot(nb_samples, MC_estims, label='Estimator', color='red')
+    plt.plot(nb_samples, CI[:, 0], linestyle='--', label='Estimated $ \\alpha $ = '+ str(alpha)+' confidence interval', color='orange')
+    plt.plot(nb_samples, CI[:, 1], linestyle='--', color='orange')
+    plt.axhline(y=exact_val, color='blue', linestyle='-.', label='True value')
+
+    plt.xscale('log')  # Set x-axis to log scale
+    plt.xlabel('Log(Number of samples M)')
     plt.ylabel('Value')
     plt.title('Confidence interval for the crude MC estimator')
     plt.legend()
