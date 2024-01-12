@@ -2,6 +2,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from question4_new import *
+from scipy.stats import norm
 from scipy.integrate import solve_ivp
 
 ########################################################################
@@ -168,6 +169,16 @@ def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt):
         Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
     estim = (0.2 ** 2) * np.sum(Q) / M
     return estim
+def IC_CMC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt, estim, alpha):
+    M = len(a_samples)
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.var(Q)) / M
+    return CI
+
+
 
 def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
 
@@ -292,3 +303,36 @@ def MCLS_prime_2D_test(a_samples, b_samples, ff, n):
     # compute the estimator
     estim = c[0, 0]
     return estim, cond
+
+def CI_MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, estim, alpha):
+    """
+    Compute the confidence interval of the MCLS estimator.
+    args : samples
+           f, the function to integrate
+           estim, MCLS estimator based on these samples
+           alpha, significance level of the confidence interval
+    return : CI, confidence interval for the MCLS estimator based on these samples
+    """
+    M = len(a_samples)
+    # compute the 2D Vandermonde matrix
+    x = np.random.uniform(0.6, 0.8, M)
+    y = np.random.uniform(0.7, 0.9, M)
+    V = np.polynomial.legendre.legvander2d(shifted(x, 0.6, 0.8), shifted(y, 0.7, 0.9), (n, n))
+
+    # compute Q for the least squares problem
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, x[i], y[i])
+    # solve the least squares problem
+    c = np.linalg.lstsq(V, Q, rcond=None)[0]
+    c = c.reshape((n + 1, n + 1))
+    # compute Q for the estimator
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    # compute the estimator
+
+
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9),c))**2) /M)
+    #(0.2 ** 2)
+    return CI
