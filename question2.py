@@ -164,8 +164,24 @@ def MCLS(samples, f, n):
     # compute the estimator
     samples2 = samples*2 - 1
     estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
+
     return estim, cond
 
+def CI_MCLS(samples, f, n, estim, alpha):
+    """
+    Compute the confidence interval of the MCLS estimator.
+    args : samples
+           f, the function to integrate
+           estim, MCLS estimator based on these samples
+           alpha, significance level of the confidence interval
+    return : CI, confidence interval for the MCLS estimator based on these samples
+    """
+    samples2 = samples * 2 - 1
+    V = np.polynomial.legendre.legvander(samples2, n)
+    c = np.linalg.lstsq(V, f(samples), rcond=None)[0]
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / len(samples))
+    return CI
 def MCLS_prime(samples, f, n):
     """
     Compute an alternative Monte Carlo Least Square estimator of the integral of f between 0 and 1.
