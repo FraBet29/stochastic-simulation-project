@@ -1,17 +1,15 @@
 import numpy as np
-import math
 import matplotlib.pyplot as plt
-from question4_new import *
 from scipy.stats import norm
 from scipy.integrate import solve_ivp
 
-########################################################################
-# Question 5 : Application to the Fitzhugh-Nagumo model system of ODES #
-########################################################################
+#######################################################################
+# Question 5: application to the Fitzhugh-Nagumo model system of ODES #
+#######################################################################
 
 def solve_FHN(epsilon, I, v0, w0, t0, T, Nt, a, b):
     """
-    Solve the Fitzhugh-Nagumo model system of ODEs with forward Euler scheme.
+    Solve the Fitzhugh-Nagumo model system of ODEs with the forward Euler scheme.
     args: epsilon, parameter of the model
             I, parameter of the model
             v0, initial value of v
@@ -23,18 +21,18 @@ def solve_FHN(epsilon, I, v0, w0, t0, T, Nt, a, b):
             b, parameter of the model
     """
     # time step
-    dt = (T-t0)/Nt
+    dt = (T - t0) / Nt
     # time vector
-    t = np.linspace(t0, T, Nt+1)
+    t = np.linspace(t0, T, Nt + 1)
     # initial values
-    v = np.zeros(Nt+1)
-    w = np.zeros(Nt+1)
+    v = np.zeros(Nt + 1)
+    w = np.zeros(Nt + 1)
     v[0] = v0
     w[0] = w0
     # forward Euler scheme
     for i in range(Nt):
-        v[i+1] = v[i] + dt*(v[i] - np.power(v[i], 3)/3 - w[i] + I)
-        w[i+1] = w[i] + dt*epsilon*(v[i] + a - b*w[i])
+        v[i+1] = v[i] + dt * (v[i] - v[i] ** 3 / 3 - w[i] + I)
+        w[i+1] = w[i] + dt * epsilon * (v[i] + a - b * w[i])
     return v, w, t
 
 
@@ -52,7 +50,7 @@ def solve_FHN_scipy(epsilon, I, v0, w0, t0, T, Nt, a, b):
             b, parameter of the model
     """
     # time vector
-    t = np.linspace(t0, T, Nt+1)
+    t = np.linspace(t0, T, Nt + 1)
     # initial values
     y0 = [v0, w0]
     # function to solve
@@ -64,6 +62,7 @@ def solve_FHN_scipy(epsilon, I, v0, w0, t0, T, Nt, a, b):
     # solve the system of ODEs
     sol = solve_ivp(fitzhugh_nagumo, [t0, T], y0, t_eval=t)
     return sol.y[0], sol.y[1], sol.t
+
 
 def calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a, b):
     """
@@ -79,9 +78,116 @@ def calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a, b):
             b, parameter of the model
     """
     v, w, t = solve_FHN(epsilon, I, v0, w0, t0, T, Nt, a, b)
-    dt = (T-t0)/Nt
-    return (np.sum(np.square(v))-v[0]**2-v[len(v)-1]**2)*dt
+    dt = (T - t0) / Nt
+    Q = (np.sum(v ** 2) - v[0] ** 2 - v[len(v)-1] ** 2) * dt
+    return Q
 
+
+def shifted(x, a, b):
+    """
+    Shift the evaluation of the Legendre polynomials from [-1, 1] to [a, b].
+    args: x, evaluation points
+          a, 1st extreme of the interval
+          b, 2nd extreme of the interval
+    """
+    return 2 * (x - a) / (b - a) - 1
+
+
+def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt, alpha):
+    """
+    Provide a crude Monte Carlo estimator for the integral of Q.
+    args : a_samples, samples x drawn from uniform distribution U([0.6, 0.8])
+           b_samples, samples y drawn from uniform distribution U([0.7, 0.9])
+           epsilon, I, v0, w0, t0, T, Nt, parameters of the Fitzhugh-Nagumo model
+    return : estim, crude MC estimator based on these samples
+             CI, confidence interval for the crude MC estimator based on these samples
+    """
+    M = len(a_samples)
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    estim = (0.2 ** 2) * np.sum(Q) / M
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.std(Q) / M
+    return estim, CI
+
+
+def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+    """
+    Compute Monte Carlo Least Square estimator of for the integral of Q.
+    args : a_samples, samples x drawn from uniform distribution U([0.6, 0.8])
+           b_samples, samples y drawn from uniform distribution U([0.7, 0.9])
+           n, maximal exponential of the Legendre polynomials
+           epsilon, I, v0, w0, t0, T, Nt, parameters of the Fitzhugh-Nagumo model
+    return : estim, crude MC estimator based on these samples
+             CI, confidence interval for the crude MC estimator based on these samples
+    """
+    M = len(a_samples)
+    
+    # compute the 2D Vandermonde matrix
+    x = np.random.uniform(0.6, 0.8, M)
+    y = np.random.uniform(0.7, 0.9, M)
+    V = np.polynomial.legendre.legvander2d(shifted(x, 0.6, 0.8), shifted(y, 0.7, 0.9), (n, n))
+
+    # compute the condition number
+    cond = np.linalg.cond(V)
+    
+    # compute Q for the least squares problem
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, x[i], y[i])
+    
+    # solve the least squares problem
+    c = np.linalg.lstsq(V, Q, rcond=None)[0]
+    c = c.reshape((n + 1, n + 1))
+    
+    # compute Q for the estimator
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    
+    # compute the estimator
+    estim = (0.2 ** 2) * (np.sum(Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) / M + c[0, 0])
+    return estim, cond
+
+
+def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+    """
+    Compute an alternative Monte Carlo Least Square estimator of for the integral of Q.
+    args : a_samples, samples x drawn from uniform distribution U([0.6, 0.8])
+           b_samples, samples y drawn from uniform distribution U([0.7, 0.9])
+           n, maximal exponential of the Legendre polynomials
+           epsilon, I, v0, w0, t0, T, Nt, parameters of the Fitzhugh-Nagumo model
+    return : estim, crude MC estimator based on these samples
+             CI, confidence interval for the crude MC estimator based on these samples
+    """
+    M = len(a_samples)
+    
+    # compute the 2D Vandermonde matrix
+    V = np.polynomial.legendre.legvander2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), (n, n))
+
+    # compute the condition number
+    cond = np.linalg.cond(V)
+    
+    # compute Q
+    Q = np.zeros(M)
+    for i in range(M):
+        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
+    
+    # solve the least squares problem
+    c = np.linalg.lstsq(V, Q, rcond=None)[0]
+    c = c.reshape((n + 1, n + 1))
+    
+    # compute the estimator
+    estim = (0.2 ** 2) * c[0, 0]
+    
+    return estim, cond
+
+
+
+
+
+
+# TO CHECK
 
 def MCLS_multiple(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     # I have some doubts about the range of a and b (this sampling is only for solving the LS problem)
@@ -119,8 +225,6 @@ def MCLS_interior (b_samples, n, epsilon, I, v0, w0, t0, T, Nt, a):
     estim = 0.2*(np.sum(Q - np.polynomial.legendre.legval(samples2, c)) / len(b_samples) + c[0])
     return estim
 
-
-
 def IS_MCLS_multiple(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     weights = 1 / h(a_samples, n)
     x = sample_from_h_new(len(a_samples), 1000, n)
@@ -155,126 +259,6 @@ def IS_MCLS_interior (b_samples, n, epsilon, I, v0, w0, t0, T, Nt, a):
     estim = np.sum(np.dot(Q - np.polynomial.legendre.legval(samples2, c), weights)) / np.sum(weights) + c[0]
 
     return estim
-
-def shifted(x, a, b):
-    """
-    Shift the evaluation of the Legendre polynomials from [-1, 1] to [a, b].
-    """
-    return 2 * (x - a) / (b - a) - 1
-
-def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt):
-    M = len(a_samples)
-    Q = np.zeros(M)
-    for i in range(M):
-        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
-    estim = (0.2 ** 2) * np.sum(Q) / M
-    return estim
-
-def IC_CMC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt, estim, alpha):
-    M = len(a_samples)
-    Q = np.zeros(M)
-    for i in range(M):
-        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.var(Q)) / M
-    return CI
-
-
-
-def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
-
-    M = len(a_samples)
-    # compute the 2D Vandermonde matrix
-    x = np.random.uniform(0.6, 0.8, M)
-    y = np.random.uniform(0.7, 0.9, M)
-    V = np.polynomial.legendre.legvander2d(shifted(x, 0.6, 0.8), shifted(y, 0.7, 0.9), (n, n))
-    cond = np.linalg.cond(V)
-    # compute Q for the least squares problem
-    Q = np.zeros(M)
-    for i in range(M):
-        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, x[i], y[i])
-    # solve the least squares problem
-    c = np.linalg.lstsq(V, Q, rcond=None)[0]
-    c = c.reshape((n + 1, n + 1))
-    # compute Q for the estimator
-    for i in range(M):
-        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
-    # compute the estimator
-    estim = (0.2 ** 2) * (np.sum(Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) / M + c[0, 0])
-    return estim, cond
-    """
-    M = len(a_samples)
-    # build a 2D grid of random points for the least squares
-    x = np.random.uniform(0.6, 0.8, M)
-    y = np.random.uniform(0.7, 0.9, M)
-    X, Y = np.meshgrid(x, y)
-    X_shifted, Y_shifted = np.meshgrid(shifted(x, 0.6, 0.8), shifted(y, 0.7, 0.9))
-    # compute Q for the least squares problem
-    Q = np.zeros((M, M))
-    for i in range(M):
-        for j in range(M):
-            Q[i, j] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, X[i, j], Y[i, j])
-    # flatten the 2D grid
-    X_flat, Y_flat, X_shifted_flat, Y_shifted_flat = X.flatten(), Y.flatten(), X_shifted.flatten(), Y_shifted.flatten()
-    Q_flat = Q.flatten()
-    # compute the 2D Vandermonde matrix
-    V = np.polynomial.legendre.legvander2d(X_shifted_flat, Y_shifted_flat, [n, n])
-    cond = np.linalg.cond(V)
-    # solve the least squares problem
-    c = np.linalg.lstsq(V, Q_flat, rcond=None)[0]
-    c = c.reshape((n + 1, n + 1))
-    # build a 2D grid of random points for the estimator
-    A, B = np.meshgrid(a_samples, b_samples)
-    A_shifted, B_shifted = np.meshgrid(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9))
-    # compute Q for the estimator
-    Q = np.zeros((M, M))
-    for i in range(M):
-        for j in range(M):
-            Q[i, j] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, A[i, j], B[i, j])
-    # compute the estimator
-    legval = np.polynomial.legendre.legval2d(A_shifted, B_shifted, c)
-    estim = (0.2 ** 2) * (np.sum(Q.flatten() - legval.flatten()) / M ** 2 + c[0, 0])
-    return estim, cond
-    """
-def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
-
-    M = len(a_samples)
-    # compute the 2D Vandermonde matrix
-    V = np.polynomial.legendre.legvander2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), (n, n))
-    cond = np.linalg.cond(V)
-    # compute Q
-    Q = np.zeros(M)
-    for i in range(M):
-        Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
-    # solve the least squares problem
-    c = np.linalg.lstsq(V, Q, rcond=None)[0]
-    c = c.reshape((n + 1, n + 1))
-    # compute the estimator
-    estim = (0.2 ** 2) * c[0, 0]
-    return estim, cond
-    """
-    M = len(a_samples)
-    # build a 2D grid of random points for the least squares
-    A, B = np.meshgrid(a_samples, b_samples)
-    A_shifted, B_shifted = np.meshgrid(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9))
-    # compute Q for the least squares problem
-    Q = np.zeros((M, M))
-    for i in range(M):
-        for j in range(M):
-            Q[i, j] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, A[i, j], B[i, j])
-    # flatten the 2D grid
-    A_flat, B_flat, A_shifted_flat, B_shifted_flat = A.flatten(), B.flatten(), A_shifted.flatten(), B_shifted.flatten()
-    Q_flat = Q.flatten()
-    # compute the 2D Vandermonde matrix
-    V = np.polynomial.legendre.legvander2d(A_shifted_flat, B_shifted_flat, [n, n])
-    cond = np.linalg.cond(V)
-    # solve the least squares problem
-    c = np.linalg.lstsq(V, Q_flat, rcond=None)[0]
-    c = c.reshape((n + 1, n + 1))
-    # compute the estimator
-    estim = (0.2 ** 2) * c[0, 0]
-    return estim, cond
-    """
 
 def ff(x, y):
     return f(x) * f(y)
