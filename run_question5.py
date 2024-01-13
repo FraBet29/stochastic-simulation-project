@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import time
 
-#######################################################################
-# Question 5: application to the Fitzhugh-Nagumo model system of ODES #
-#######################################################################
+#################################################################
+# Question 5: application to the Fitzhugh-Nagumo system of ODES #
+#################################################################
 
 ### solve the system of ODEs ###
 
