@@ -13,7 +13,7 @@ def f(x):
     args : points x where f will be evaluated
     return : value of the function
     """
-    return 1 / (25 * x**2 + 1)
+    return 1 / (25 * x ** 2 + 1)
 
 
 def crude_MC(samples, f, alpha):
@@ -119,13 +119,13 @@ def loglog_average_error_graph(nb_samples, MC_estims, ref_value):
     plt.figure(figsize=(8, 6))
     plt.scatter(log_nb_samples, log_errors, label='Absolute error')
 
-    # Fit a linear regression line
+    # fit a linear regression line
     regression = LinearRegression()
     regression.fit(log_nb_samples.reshape(-1, 1), log_errors)
     pred = regression.predict(log_nb_samples.reshape(-1, 1))
     plt.plot(log_nb_samples, pred, color='red', label='Linear regression')
 
-    # Get the coefficients of the linear regression
+    # get the coefficients of the linear regression
     slope = regression.coef_[0]
     intercept = regression.intercept_
     equation = f'y = {slope:.2f}x + {intercept:.2f}'
@@ -286,13 +286,13 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
             
         else:
             
-            # Colors for other legend_series values
+            # colors for other legend_series values
             color = colors(i)
 
             plt.scatter(log_nb_samples, log_errors, label=f'Serie n = ' + str(legend_M), color=color, s=5)
 
             if len(log_nb_samples[log_nb_samples > 2.5]) != 0:
-                # Fit a linear regression line
+                # fit a linear regression line
                 regression = LinearRegression()
                 regression.fit(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1), log_errors[log_nb_samples > 2.5])
                 pred = regression.predict(log_nb_samples[log_nb_samples > 2.5].reshape(-1, 1))
@@ -362,6 +362,8 @@ def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
     plt.show()
 
     return
+
+
 
 
 # TO CHECK

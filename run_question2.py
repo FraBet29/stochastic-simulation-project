@@ -78,8 +78,6 @@ for M in range(N):
 
 # plot log-log graph to see the order of the error
 multiple_loglog_graph(nb_samples, MCLS_estims, ref_value, trials_n)
-
-# plot log-log graph to see the order of the error
 multiple_loglog_graph(nb_samples, MCLS_prime_estims, ref_value, trials_n)
 
 # plot log-log graph to see the evolution of the condition number
