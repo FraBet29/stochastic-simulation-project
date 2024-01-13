@@ -1,8 +1,8 @@
 from question5 import *
-from question2 import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+from plots import *
 import time
 
 #################################################################

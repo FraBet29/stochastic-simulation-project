@@ -1,8 +1,8 @@
 from question4 import *
-from question2 import *
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
+from plots import *
 import time
 
 #############################################

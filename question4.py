@@ -151,31 +151,6 @@ def sample_from_h(M, ite_max, n, print_rate=False):
     return h_samples
 
 
-def visualize_cdf_from_samples(samples):
-    """
-    Plot a graph of empirical cdf, based on the received samples.
-    args: samples, array containing the sample values
-    return: /
-    """
-    M = len(samples)
-
-    # sort the samples
-    sorted_samples = np.sort(samples)
-
-    # calculate the empirical CDF
-    cdf = np.arange(1, M + 1) / M
-
-    # plot the empirical CDF
-    plt.figure(figsize=(8, 6))
-    plt.plot(sorted_samples, cdf, label='Empirical CDF')
-    plt.title('Empirical CDF')
-    plt.xlabel('Samples')
-    plt.ylabel('Cumulative Probability')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-
 def IS_MCLS(samples, f, n):
     """
     Compute Monte Carlo Least Square estimator of the integral of f between 0 and 1 with importance sampling.
@@ -229,7 +204,7 @@ def IS_MCLS_prime(samples, f, n):
 
 
 
-
+# TO CHECK
 
 def visualize_bound_g_on_h(n_value) :
     # Define the range of x values
