@@ -384,7 +384,7 @@ def CI_CMC(samples, f, n, estim, alpha):
     c = np.linalg.lstsq(V, f(x), rcond=None)[0]
     #print(c)
     quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c)**2) / len(samples))
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c)**2) / len(samples)/len(samples))
     return CI
 
 
@@ -403,7 +403,8 @@ def CI_MCLS(samples, f, n, estim, alpha):
     V = np.polynomial.legendre.legvander(x2, n)
     c = np.linalg.lstsq(V, f(x), rcond=None)[0]
     quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / len(samples))
+    std_ls=np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / len(samples))
+    CI = estim + np.array([-1, 1]) * quantile * std_ls /np.sqrt(len(samples))
     return CI
 
 
@@ -423,7 +424,8 @@ def CI_MCLSn(samples, f, n, estim, alpha):
     V = np.polynomial.legendre.legvander(x2, n)
     c = np.linalg.lstsq(V, f(x), rcond=None)[0]
     quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / (len(samples)-n))
+    std_ls=np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / (len(samples)-n))
+    CI = estim + np.array([-1, 1]) * quantile *std_ls/ np.sqrt(len(samples))
     return CI
 
 
@@ -442,5 +444,5 @@ def CI_MCLS_prime(samples, f, n, estim, alpha):
     V = np.polynomial.legendre.legvander(x2, n)
     c = np.linalg.lstsq(V, f(x), rcond=None)[0]
     quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c[0])**2) / len(samples))
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c[0])**2) / len(samples)/len(samples))
     return CI
