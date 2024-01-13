@@ -1,59 +1,42 @@
 import numpy as np 
-import math
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
-######################################
-# Question 2 : estimating integral I #
-######################################
+#######################################################
+# Question 2: estimating integral I with CMC and MCLS #
+#######################################################
 
 def f(x):
     """
     Evaluate the function to be integrated at point x.
     args : points x where f will be evaluated
-    return : value of the function defined in question 2
+    return : value of the function
     """
-    return 1/(25*x**2+1)
+    return 1 / (25 * x**2 + 1)
+
 
 def crude_MC(samples, f, alpha):
     """
     Provide a crude Monte Carlo estimator for the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
            f, the function to integrate
-            alpha, significance level
+           alpha, significance level
     return : estim, crude MC estimator based on these samples
-            CI, confidence interval for the crude MC estimator based on these samples
+             CI, confidence interval for the crude MC estimator based on these samples
     """
     estim = np.sum(f(samples)) / len(samples)
     quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
     CI = estim + np.array([-1, 1]) * np.sqrt(np.var(f(samples)) / len(samples)) * quantile
     return estim, CI
-def CI_CMC(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the CMC estimator with variance calculated with LS
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    #print(c)
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c)**2) / len(samples))
-    return CI
+
 
 def loglog_graph(nb_samples, MC_estims, ref_value):
     """
     Plot the graph of the error in absolute value of the MC_estims for the 'true' value ref_value.
     args : nb_samples, vector containing the number of samples used to compute each estimator
            MC_estims, the estimators
-           ref_value, the reference 'true' value
+           ref_value, the reference value
     return : /
     """
     # compute absolute values of the error between estimators and ref_value
@@ -89,13 +72,14 @@ def loglog_graph(nb_samples, MC_estims, ref_value):
 
     return
 
+
 def plot_CI(nb_samples, MC_estims, CI, exact_val, alpha):
     """
     Plot the confidence interval of the crude MC estimator.
     args : nb_samples, vector containing the number of samples used to compute each estimator
            MC_estims, the estimators
            CI, confidence interval for the crude MC estimator based on these samples
-           exact_val, true value
+           exact_val, the reference value
     return : /
     """
     plt.figure(figsize=(8, 6))
@@ -114,6 +98,7 @@ def plot_CI(nb_samples, MC_estims, CI, exact_val, alpha):
 
     return
 
+
 def loglog_average_error_graph(nb_samples, MC_estims, ref_value):
     """
     Plot the graph of the error in absolute value of the MC_estims for the 'true' value ref_value.
@@ -125,12 +110,11 @@ def loglog_average_error_graph(nb_samples, MC_estims, ref_value):
     # compute absolute values of the error between estimators and ref_value
     absolute_errors = np.abs(MC_estims - ref_value)
     
-    averages = 1/len(MC_estims[0])*np.sum(absolute_errors, axis=1)
+    averages = 1 / len(MC_estims[0]) * np.sum(absolute_errors, axis=1)
 
     # create log-log plot
     log_nb_samples = np.log10(nb_samples)
     log_errors = np.log10(averages)
-
 
     plt.figure(figsize=(8, 6))
     plt.scatter(log_nb_samples, log_errors, label='Absolute error')
@@ -158,6 +142,7 @@ def loglog_average_error_graph(nb_samples, MC_estims, ref_value):
 
     return
 
+
 def MCLS(samples, f, n):
     """
     Compute Monte Carlo Least Square estimator of the integral of f between 0 and 1.
@@ -169,57 +154,21 @@ def MCLS(samples, f, n):
     """
     # compute the Vandermonde matrix
     x = np.random.uniform(0, 1, len(samples))
-    x2 = x*2 - 1
+    x2 = 2 * x - 1 # shift the Legendre polynomials from [-1, 1] to [0, 1]
     V = np.polynomial.legendre.legvander(x2, n)
+    
+    # compute the condition number
     cond = np.linalg.cond(V)
-    """
-    # compute the coefficients of the estimator using a QR decomposition
-    Q, R = np.linalg.qr(V.T @ V)
-    y = Q.T @ (V.T @ f(x))
-    c = np.linalg.solve(R, y)
-    """
+    
+    # solve the least squares problem
     c = np.linalg.lstsq(V, f(x), rcond=None)[0]
+    
     # compute the estimator
-    samples2 = samples*2 - 1
+    samples2 = 2 * samples - 1
     estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
-
+    
     return estim, cond
 
-def CI_MCLS(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the MCLS estimator.
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / len(samples))
-    return CI
-def CI_MCLSn(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the MCLS estimator rescaling the variance
-    pay attention that now we have to consider only the cases where the number of samples is bigger than the number of coefficients
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / (len(samples)-n))
-    return CI
 
 def MCLS_prime(samples, f, n):
     """
@@ -231,47 +180,20 @@ def MCLS_prime(samples, f, n):
              cond, condition number of the Vandermonde matrix
     """
     # compute the Vandermonde matrix
-    samples2 = samples*2 - 1
+    samples2 = 2 * samples - 1
     V = np.polynomial.legendre.legvander(samples2, n)
+
+    # compute the condition number
     cond = np.linalg.cond(V)
-    # compute the coefficients of the estimator
+    
+    # solve the least squares problem
     c = np.linalg.lstsq(V, f(samples), rcond=None)[0]
+    
     # compute the estimator
     estim = c[0]
+    
     return estim, cond
 
-def CI_MCLS_prime(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the MCLS estimator.
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c[0])**2) / len(samples))
-    return CI
-def least_squares(n, M): 
-    """
-    Compute n + 1 coefficients of least squares based on M samples
-    args : n, st n+1 is the number of coefficients
-           M, number of samples to use
-    return : c, vector containing the n+1 optimal coefficients
-             cond, condition number of the Vandermonde matrix
-    """
-	# generate M samples
-    x = np.random.uniform(0, 1, M)
-    y = f(x)
-	# solve the least squares problem
-    c, diagnostics = np.polynomial.legendre.Legendre.fit(x, y, n, domain=[0, 1], full=True) # diagnostics = [resid, rank, sv, rcond]
-    cond = np.max(diagnostics[2]) / np.min(diagnostics[2])
-    return c.coef, cond
 
 def MCLS_new(samples, f, n):
     """
@@ -282,10 +204,20 @@ def MCLS_new(samples, f, n):
     return : estim, MCLS estimator based on these samples
              cond, condition number of the Vandermonde matrix
     """
-    c, cond = least_squares(n, len(samples))
-    samples2 = samples*2 - 1
+    # solve the least squares problem
+    x = np.random.uniform(0, 1, len(samples))
+    c, diagnostics = np.polynomial.legendre.Legendre.fit(x, f(x), n, domain=[0, 1], full=True) # diagnostics = [resid, rank, sv, rcond]
+    c = c.coef
+
+    # compute the condition number
+    cond = np.max(diagnostics[2]) / np.min(diagnostics[2])
+    
+    # compute the estimator
+    samples2 = 2 * samples - 1
     estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
+    
     return estim, cond
+
 
 def MCLS_prime_new(samples, f, n):
     """
@@ -295,9 +227,18 @@ def MCLS_prime_new(samples, f, n):
     return : estim, MCLS estimator based on these samples
              cond, condition number of the Vandermonde matrix
     """
-    c, cond = least_squares(n, len(samples))
+    # solve the least squares problem
+    c, diagnostics = np.polynomial.legendre.Legendre.fit(samples, f(samples), n, domain=[0, 1], full=True) # diagnostics = [resid, rank, sv, rcond]
+    c = c.coef
+
+    # compute the condition number
+    cond = np.max(diagnostics[2]) / np.min(diagnostics[2])
+    
+    # compute the estimator
     estim = c[0]
+    
     return estim, cond
+
 
 def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
     """
@@ -328,7 +269,9 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
         log_errors = np.log10(absolute_errors)
 
         legend_M = legend_series[i]
+        
         if legend_M == -2 or legend_M == -1 or legend_M == -3:
+            
             if legend_M == -2:
                 legend_M = 'n = M/2'
                 color = 'blue'  # Blue color for legend_series -2
@@ -338,9 +281,11 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
             elif legend_M == -3:
                 legend_M = '$ M = n \log{n}$'
                 color = 'green'
-
+                
             plt.plot(log_nb_samples, log_errors, label=f'Serie ' + str(legend_M), color=color, linestyle='--', marker='o', markersize=3, linewidth=1)
+            
         else:
+            
             # Colors for other legend_series values
             color = colors(i)
 
@@ -371,6 +316,7 @@ def multiple_loglog_graph(nb_samples, MC_estims_list, ref_value, legend_series):
     plt.show()
 
     return
+
 
 def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
     """
@@ -416,3 +362,83 @@ def multiple_cond_loglog_graph(nb_samples, cond_list, legend_series):
     plt.show()
 
     return
+
+
+# TO CHECK
+
+def CI_CMC(samples, f, n, estim, alpha):
+    """
+    Compute the confidence interval of the CMC estimator with variance calculated with LS
+    args : samples
+           f, the function to integrate
+           estim, MCLS estimator based on these samples
+           alpha, significance level of the confidence interval
+    return : CI, confidence interval for the MCLS estimator based on these samples
+    """
+    samples2 = samples * 2 - 1
+    x = np.random.uniform(0, 1, len(samples))
+    x2 = x * 2 - 1
+    V = np.polynomial.legendre.legvander(x2, n)
+    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
+    #print(c)
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c)**2) / len(samples))
+    return CI
+
+
+def CI_MCLS(samples, f, n, estim, alpha):
+    """
+    Compute the confidence interval of the MCLS estimator.
+    args : samples
+           f, the function to integrate
+           estim, MCLS estimator based on these samples
+           alpha, significance level of the confidence interval
+    return : CI, confidence interval for the MCLS estimator based on these samples
+    """
+    samples2 = samples * 2 - 1
+    x = np.random.uniform(0, 1, len(samples))
+    x2 = x * 2 - 1
+    V = np.polynomial.legendre.legvander(x2, n)
+    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / len(samples))
+    return CI
+
+
+def CI_MCLSn(samples, f, n, estim, alpha):
+    """
+    Compute the confidence interval of the MCLS estimator rescaling the variance
+    pay attention that now we have to consider only the cases where the number of samples is bigger than the number of coefficients
+    args : samples
+           f, the function to integrate
+           estim, MCLS estimator based on these samples
+           alpha, significance level of the confidence interval
+    return : CI, confidence interval for the MCLS estimator based on these samples
+    """
+    samples2 = samples * 2 - 1
+    x = np.random.uniform(0, 1, len(samples))
+    x2 = x * 2 - 1
+    V = np.polynomial.legendre.legvander(x2, n)
+    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / (len(samples)-n))
+    return CI
+
+
+def CI_MCLS_prime(samples, f, n, estim, alpha):
+    """
+    Compute the confidence interval of the MCLS estimator.
+    args : samples
+           f, the function to integrate
+           estim, MCLS estimator based on these samples
+           alpha, significance level of the confidence interval
+    return : CI, confidence interval for the MCLS estimator based on these samples
+    """
+    samples2 = samples * 2 - 1
+    x = np.random.uniform(0, 1, len(samples))
+    x2 = x * 2 - 1
+    V = np.polynomial.legendre.legvander(x2, n)
+    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c[0])**2) / len(samples))
+    return CI
