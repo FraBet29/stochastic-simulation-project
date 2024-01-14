@@ -93,12 +93,13 @@ def shifted(x, a, b):
     return 2 * (x - a) / (b - a) - 1
 
 
-def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt, alpha):
+def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt, alpha=0.05):
     """
     Provide a crude Monte Carlo estimator for the integral of Q.
     args : a_samples, samples x drawn from uniform distribution U([0.6, 0.8])
            b_samples, samples y drawn from uniform distribution U([0.7, 0.9])
            epsilon, I, v0, w0, t0, T, Nt, parameters of the Fitzhugh-Nagumo model
+           alpha, significance level of the confidence interval
     return : estim, crude MC estimator based on these samples
              CI, confidence interval for the crude MC estimator based on these samples
     """
@@ -108,11 +109,11 @@ def crude_MC_2D(a_samples, b_samples, epsilon, I, v0, w0, t0, T, Nt, alpha):
         Q[i] = calculate_Q(epsilon, I, v0, w0, t0, T, Nt, a_samples[i], b_samples[i])
     estim = (0.2 ** 2) * np.sum(Q) / M
     quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.std(Q) / M
+    CI = estim + np.array([-1, 1]) * quantile * np.std(Q) / np.sqrt(M)
     return estim, CI
 
 
-def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, alpha):
+def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, alpha=0.05):
     """
     Compute Monte Carlo Least Square estimator of for the integral of Q.
     args : a_samples, samples x drawn from uniform distribution U([0.6, 0.8])
@@ -122,7 +123,7 @@ def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, alpha):
            alpha, significance level of the confidence interval
     return : estim, crude MC estimator based on these samples
              cond, condition number of the Vandermonde matrix
-             CI, confidence interval for the crude MC estimator based on these samples
+             CI, confidence interval
     """
     M = len(a_samples)
     
@@ -149,20 +150,22 @@ def MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, alpha):
     
     # compute the estimator
     estim = (0.2 ** 2) * (np.sum(Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) / M + c[0, 0])
+
+    # compute the confidence interval
     quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    err = np.sqrt(np.sum((Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8),
-                                                              shifted(b_samples, 0.7, 0.9), c)) ** 2) / M) / np.sqrt(M)
-    CI = estim + np.array([-1, 1]) * quantile * err
+    std_ls = np.sqrt(np.sum((Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) ** 2) / M)
+    CI = estim + np.array([-1, 1]) * quantile * std_ls / np.sqrt(M)
     return estim, cond, CI
 
 
-def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
+def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, alpha=0.05):
     """
     Compute an alternative Monte Carlo Least Square estimator of for the integral of Q.
     args : a_samples, samples x drawn from uniform distribution U([0.6, 0.8])
            b_samples, samples y drawn from uniform distribution U([0.7, 0.9])
            n, maximal exponential of the Legendre polynomials
            epsilon, I, v0, w0, t0, T, Nt, parameters of the Fitzhugh-Nagumo model
+           alpha, significance level of the confidence interval
     return : estim, crude MC estimator based on these samples
              cond, condition number of the Vandermonde matrix
     """
@@ -186,7 +189,12 @@ def MCLS_prime_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     # compute the estimator
     estim = (0.2 ** 2) * c[0, 0]
 
-    return estim, cond
+    # compute the confidence interval
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    std_ls = np.sqrt(np.sum((Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) ** 2) / M)
+    CI = estim + np.array([-1, 1]) * quantile * std_ls / np.sqrt(M)
+
+    return estim, cond, CI
 
 
 def calculate_error(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
@@ -220,17 +228,19 @@ def calculate_error(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
 
     # compute the error estimator
     err = np.sqrt(np.sum((Q - np.polynomial.legendre.legval2d(shifted(a_samples, 0.6, 0.8), shifted(b_samples, 0.7, 0.9), c)) ** 2)) / M
+    
     return err
 
 
 # not necessary, already included in MCLS_2D
-def CI_MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, estim, alpha):
+def CI_MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, estim, alpha=0.05):
     """
     Compute the confidence interval of the MCLS estimator.
     args : a_samples, samples x drawn from uniform distribution U([0.6, 0.8])
             b_samples, samples y drawn from uniform distribution U([0.7, 0.9])
             n, maximal exponential of the Legendre polynomials
             epsilon, I, v0, w0, t0, T, Nt, parameters of the Fitzhugh-Nagumo model
+            alpha, significance level of the confidence interval
     return : CI, confidence interval
     """
     M = len(a_samples)
