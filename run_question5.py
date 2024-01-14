@@ -95,7 +95,8 @@ err_MCLS_2D=[-1 * np.ones(N) for _ in range(nb_trials_n)]
 MCLS_prime_estims_2D = [-1 * np.ones(N) for _ in range(nb_trials_n)]
 
 tic = time.time()
-# In[5]:
+
+
 for M in range(N):
     for i in range(nb_trials_n):
 
@@ -107,7 +108,7 @@ for M in range(N):
         if n < nb_samples[M]:
             a_unif_samps = np.random.uniform(0.6, 0.8, nb_samples[M])
             b_unif_samps = np.random.uniform(0.7, 0.9, nb_samples[M])
-            MCLS_estims_2D[i][M], _ , MCLS_CI_2D = MCLS_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt, alpha)
+            MCLS_estims_2D[i][M], _, MCLS_CI_2D[i][M]= MCLS_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt, alpha)
             err_MCLS_2D[i][M] = calculate_error(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt)
             MCLS_prime_estims_2D[i][M], _ = MCLS_prime_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt)
 
