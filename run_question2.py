@@ -32,18 +32,6 @@ loglog_graph(nb_samples, CMC_estims, ref_value)
 # plot semi-log graph to see the confidence intervals
 plot_CI(nb_samples, CMC_estims, CMC_conf, ref_value, alpha)
 
-# averaging the absolute error, i.e. doing 'averaging' experiments for each value of M (number of samples)
-averaging = 20
-CMC_estims_av = np.zeros((N, averaging))
-for M in range(N):
-    CMC_estims_M = np.zeros(averaging)
-    for i in range(averaging):
-        unif_samps = np.random.uniform(0, 1, nb_samples[M])
-        CMC_estims_M[i], _ = crude_MC(unif_samps, f, alpha)
-    CMC_estims_av[M][:] = CMC_estims_M
-
-loglog_average_error_graph(nb_samples, CMC_estims_av, ref_value)
-
 ### MCLS ###
 
 # maximum degree of the Legendre polynomials
@@ -74,8 +62,8 @@ for M in range(N):
 
         if n < nb_samples[M]: # avoid underdetermined least squares
             unif_samps = np.random.uniform(0, 1, nb_samples[M])
-            MCLS_estims[i][M], MCLS_cond[i][M] = MCLS(unif_samps, f, n)
-            MCLS_prime_estims[i][M], MCLS_prime_cond[i][M] = MCLS_prime(unif_samps, f, n)
+            MCLS_estims[i][M], MCLS_cond[i][M], _ = MCLS(unif_samps, f, n)
+            MCLS_prime_estims[i][M], MCLS_prime_cond[i][M], _ = MCLS_prime(unif_samps, f, n)
 
 # plot log-log graph to see the order of the error
 multiple_loglog_graph(nb_samples, MCLS_estims, ref_value, trials_n)
