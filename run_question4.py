@@ -56,6 +56,10 @@ for M in range(N):
             n = np.rint(np.real(nb_samples[M] / scipy.special.lambertw(nb_samples[M]))).astype(int)
             if nb_samples[M] > 5000:
                 break
+        if n == -4:
+            n = np.ceil((nb_samples[M])*np.log(nb_samples[M])).astype(int)
+            if nb_samples[M] > 5000:
+                break
 
         if n < nb_samples[M]:
             h_samples = sample_from_h(nb_samples[M], 1000, n)
