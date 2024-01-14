@@ -15,7 +15,7 @@ def f(x):
     return 1 / (25 * x ** 2 + 1)
 
 
-def crude_MC(samples, f, alpha):
+def crude_MC(samples, f, alpha=0.05):
     """
     Provide a crude Monte Carlo estimator for the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
@@ -30,7 +30,7 @@ def crude_MC(samples, f, alpha):
     return estim, CI
 
 
-def MCLS(samples, f, n):
+def MCLS(samples, f, n, alpha=0.05):
     """
     Compute Monte Carlo Least Square estimator of the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
@@ -38,6 +38,7 @@ def MCLS(samples, f, n):
            n, maximal exponential of the Legendre polynomials
     return : estim, MCLS estimator based on these samples
              cond, condition number of the Vandermonde matrix
+             CI, confidence interval
     """
     # compute the Vandermonde matrix
     x = np.random.uniform(0, 1, len(samples))
@@ -53,11 +54,16 @@ def MCLS(samples, f, n):
     # compute the estimator
     samples2 = 2 * samples - 1
     estim = np.sum(f(samples) - np.polynomial.legendre.legval(samples2, c)) / len(samples) + c[0]
+
+    # compute the confidence interval
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    std_ls = np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c)) ** 2) / len(samples))
+    CI = estim + np.array([-1, 1]) * quantile * std_ls / np.sqrt(len(samples))
     
-    return estim, cond
+    return estim, cond, CI
 
 
-def MCLS_prime(samples, f, n):
+def MCLS_prime(samples, f, n, alpha=0.05):
     """
     Compute an alternative Monte Carlo Least Square estimator of the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
@@ -65,6 +71,7 @@ def MCLS_prime(samples, f, n):
            n, maximal exponential of the Legendre polynomials
     return : estim, MCLS estimator based on these samples
              cond, condition number of the Vandermonde matrix
+             CI, confidence interval
     """
     # compute the Vandermonde matrix
     samples2 = 2 * samples - 1
@@ -78,11 +85,16 @@ def MCLS_prime(samples, f, n):
     
     # compute the estimator
     estim = c[0]
+
+    # compute the confidence interval
+    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
+    std_ls = np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c)) ** 2) / len(samples))
+    CI = estim + np.array([-1, 1]) * quantile * std_ls / np.sqrt(len(samples))
     
-    return estim, cond
+    return estim, cond, CI
 
 
-def MCLS_new(samples, f, n):
+def MCLS_old(samples, f, n):
     """
     Compute Monte Carlo Least Square estimator of the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
@@ -106,7 +118,7 @@ def MCLS_new(samples, f, n):
     return estim, cond
 
 
-def MCLS_prime_new(samples, f, n):
+def MCLS_prime_old(samples, f, n):
     """
     Compute an alternative Monte Carlo Least Square estimator of the integral of f between 0 and 1.
     args : samples, samples x drawn from uniform distribution U([0, 1])
@@ -125,88 +137,3 @@ def MCLS_prime_new(samples, f, n):
     estim = c[0]
     
     return estim, cond
-
-
-
-
-
-# TO CHECK
-
-def CI_CMC(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the CMC estimator with variance calculated with LS
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    #print(c)
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c)**2) / len(samples)/len(samples))
-    return CI
-
-
-def CI_MCLS(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the MCLS estimator.
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    std_ls=np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / len(samples))
-    CI = estim + np.array([-1, 1]) * quantile * std_ls /np.sqrt(len(samples))
-    return CI
-
-
-def CI_MCLSn(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the MCLS estimator rescaling the variance
-    pay attention that now we have to consider only the cases where the number of samples is bigger than the number of coefficients
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    std_ls=np.sqrt(np.sum((f(samples) - np.polynomial.legendre.legval(samples2, c))**2) / (len(samples)-n))
-    CI = estim + np.array([-1, 1]) * quantile *std_ls/ np.sqrt(len(samples))
-    return CI
-
-
-def CI_MCLS_prime(samples, f, n, estim, alpha):
-    """
-    Compute the confidence interval of the MCLS estimator.
-    args : samples
-           f, the function to integrate
-           estim, MCLS estimator based on these samples
-           alpha, significance level of the confidence interval
-    return : CI, confidence interval for the MCLS estimator based on these samples
-    """
-    samples2 = samples * 2 - 1
-    x = np.random.uniform(0, 1, len(samples))
-    x2 = x * 2 - 1
-    V = np.polynomial.legendre.legvander(x2, n)
-    c = np.linalg.lstsq(V, f(x), rcond=None)[0]
-    quantile = norm.ppf(1 - alpha / 2, loc=0, scale=1)
-    CI = estim + np.array([-1, 1]) * quantile * np.sqrt(np.sum((f(samples) - c[0])**2) / len(samples)/len(samples))
-    return CI
