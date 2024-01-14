@@ -223,6 +223,7 @@ def calculate_error(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt):
     return err
 
 
+# not necessary, already included in MCLS_2D
 def CI_MCLS_2D(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt, estim, alpha):
     """
     Compute the confidence interval of the MCLS estimator.

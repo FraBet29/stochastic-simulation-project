@@ -35,6 +35,7 @@ plt.plot(t_scipy, w_scipy)
 plt.legend(['v', 'w', 'v_scipy', 'w_scipy'])
 plt.show()
 
+
 ### estimate the integral of Q ###
 
 compute_ref = False
@@ -86,13 +87,15 @@ ref_value_2D_MCLS_prime = 1.174979186071431
 # maximum degree of the Legendre polynomials
 trials_n = [0, 1, 2, 3]
 nb_trials_n = len(trials_n)
-
+alpha=0.05
 # MCLS estimators
 MCLS_estims_2D = [-1 * np.ones(N) for _ in range(nb_trials_n)]
+MCLS_CI_2D=[-1 * np.ones((N,2)) for _ in range(nb_trials_n)]
+err_MCLS_2D=[-1 * np.ones(N) for _ in range(nb_trials_n)]
 MCLS_prime_estims_2D = [-1 * np.ones(N) for _ in range(nb_trials_n)]
 
 tic = time.time()
-
+# In[5]:
 for M in range(N):
     for i in range(nb_trials_n):
 
@@ -104,7 +107,8 @@ for M in range(N):
         if n < nb_samples[M]:
             a_unif_samps = np.random.uniform(0.6, 0.8, nb_samples[M])
             b_unif_samps = np.random.uniform(0.7, 0.9, nb_samples[M])
-            MCLS_estims_2D[i][M], _ = MCLS_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt)
+            MCLS_estims_2D[i][M], _ , MCLS_CI_2D = MCLS_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt, alpha)
+            err_MCLS_2D[i][M] = calculate_error(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt)
             MCLS_prime_estims_2D[i][M], _ = MCLS_prime_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt)
 
 toc = time.time()
@@ -112,8 +116,21 @@ print(f'Elapsed time: {toc - tic}s')
 
 # plot log-log graph to see the order of the error
 multiple_loglog_graph(nb_samples, MCLS_estims_2D, ref_value_2D_MCLS, trials_n)
-multiple_loglog_graph(nb_samples, MCLS_prime_estims_2D, ref_value_2D_MCLS_prime, trials_n)
+multiple_loglog_graphp(nb_samples, MCLS_prime_estims_2D, ref_value_2D_MCLS_prime, trials_n)
 
+# plot the confidence interval for a fixed n
+i=3 #fix n to plot the CI for MCLS
+plot_CI(nb_samples, MCLS_estims_2D[i], MCLS_CI_2D[i], ref_value_2D_MCLS, alpha)
 
-# TO DO: ERROR ESTIMATOR FOR MCLS
+# plot the error estimate
+cut=0
+# plot the error estimator vs the true error
+plt.figure()
+for i in range(nb_trials_n):
+    plt.plot(nb_samples[cut:], np.abs(MCLS_estims_2D[i][cut:]-ref_value_2D_MCLS), label=f'true n={trials_n[i]}')
+    plt.plot(nb_samples[cut:], err_MCLS_2D[i][cut:], label=f'estimated n={trials_n[i]}')
+plt.title('Error estimator vs true error for different values of n')
+plt.xscale('log')
+plt.legend(['true error', 'estimated error'])
+
 
