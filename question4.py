@@ -196,34 +196,3 @@ def IS_MCLS_prime(samples, f, n):
     estim = c[0]
     
     return estim, cond
-
-
-
-
-
-
-
-
-# TO CHECK
-
-def visualize_bound_g_on_h(n_value) :
-    # Define the range of x values
-    x_values = np.linspace(0.0001, 0.9999, 500)  # Adjust the range as needed
-
-    # Calculate the corresponding y values for pdf_h and bound_pdf_g
-    y_bound_pdf_g = bound_pdf_g(x_values)
-
-    # Plotting
-    plt.figure(figsize=(8, 6))
-
-    for n in range(0, n_value+1) :
-        y_pdf_h = pdf_h(x_values, n)
-        plt.plot(x_values, y_pdf_h, label='pdf_h')
-    plt.plot(x_values, 4*math.e*y_bound_pdf_g, label='bound_pdf_g')
-
-    plt.title('Comparison of pdf_h and bound_pdf_g')
-    plt.xlabel('x')
-    plt.ylabel('Density')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
