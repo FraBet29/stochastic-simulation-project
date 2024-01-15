@@ -112,7 +112,7 @@ for M in range(N):
             a_unif_samps = np.random.uniform(0.6, 0.8, nb_samples[M])
             b_unif_samps = np.random.uniform(0.7, 0.9, nb_samples[M])
             MCLS_estims_2D[i][M], _, MCLS_CI_2D[i][M]= MCLS_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt, alpha)
-            err_MCLS_2D[i][M] = calculate_error(a_samples, b_samples, n, epsilon, I, v0, w0, t0, T, Nt)
+            err_MCLS_2D[i][M] = calculate_error(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt)
             MCLS_prime_estims_2D[i][M], _, _ = MCLS_prime_2D(a_unif_samps, b_unif_samps, n, epsilon, I, v0, w0, t0, T, Nt)
 
 toc = time.time()
@@ -120,18 +120,20 @@ print(f'Elapsed time: {toc - tic}s')
 
 # plot log-log graph to see the order of the error
 multiple_loglog_graph(nb_samples, MCLS_estims_2D, ref_value_2D_MCLS, trials_n)
-multiple_loglog_graphp(nb_samples, MCLS_prime_estims_2D, ref_value_2D_MCLS_prime, trials_n)
+multiple_loglog_graph(nb_samples, MCLS_prime_estims_2D, ref_value_2D_MCLS_prime, trials_n)
 
 # plot the confidence interval for a fixed n
-i = 3 # fix n to plot the CI for MCLS
-plot_CI(nb_samples, MCLS_estims_2D[i], MCLS_CI_2D[i], ref_value_2D_MCLS, alpha)
+cut = 20
+for i in range(nb_trials_n):
+    plot_CI(nb_samples[cut:], MCLS_estims_2D[i][cut:], MCLS_CI_2D[i][cut:], ref_value_2D_MCLS, alpha)
 
 # plot the error estimator vs the true error
-cut = 0
+cut = 20
 plt.figure()
 for i in range(nb_trials_n):
     plt.plot(nb_samples[cut:], np.abs(MCLS_estims_2D[i][cut:] - ref_value_2D_MCLS), label=f'true n={trials_n[i]}')
     plt.plot(nb_samples[cut:], err_MCLS_2D[i][cut:], label=f'estimated n={trials_n[i]}')
-plt.title('Error estimator vs true error for different values of n')
-plt.xscale('log')
-plt.legend(['true error', 'estimated error'])
+    plt.title('Error estimator vs true error for n=' + str(trials_n[i]))
+    plt.xscale('log')
+    plt.legend(['true error', 'estimated error'])
+    plt.show()
