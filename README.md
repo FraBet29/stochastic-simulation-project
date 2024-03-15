@@ -1,19 +1,7 @@
-# Stochastic-simulations-project
-TODO list:
-- on Thursday ask to the TA the questions:
-                  the square in eq (11)
-                  what do they mean with "generalize the estimator"
-                  point 5.a "solve the problem" how? numerically? for multiple values of a and b?
-                  point 5.b, use the MCLS or the weighted one?
-- 1: Francesca ------------------ OK
-- 2.a: Sophie ------------------- add error estimates (confidence intervals)
-- 2.b: Marianna --- currently, problems to think about
-- 3: Sophie --------------------- OK
-- 4: 2 methods to implement + estimators
-   * 4a) bound on sum -- implemented, low acc rate, to be checked
-   * 4b) bound on each -- implemented, '', ''
-   * 4c) TO DO implement estimators
-- 5:
-   * 5a) done both with Euler scheme and solve_ivp function Marianna --- OK
-   * 5b) TO DO implement estimators
-   * 5c) TO DO
+# Stochastic Simulation Project
+
+## Variance reduction in Monte Carlo integration via function approximation
+
+### Francesca Bettinelli, Marianna Dell'Otto, Sophie Lequeu
+
+The goal of this project is to reduce the variance of the Crude Monte Carlo estimator for the integral of a function $f$ by using the least squares approximation of $f$ as a multiple control variate. First, we present two basic variants of the Monte Carlo Least Squares estimator (MCLS and MCLS') and compare them with CMC on a simple one-dimensional integral. Then, to overcome some limitations of these estimators, we propose an alternative version based on importance sampling. These reduced-variance estimators are then applied to a more interesting case, the Fitzhugh-Nagumo model. In particular, we implement two-dimensional versions of the estimators to evaluate an integral of interest. Finally, we propose an error estimator, strongly related to the quality of the least squares approximation.
